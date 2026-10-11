@@ -1,2 +1,0 @@
-pip install reportlab
-pip install streamlit
