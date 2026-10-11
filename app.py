@@ -21,7 +21,60 @@ PRIMARY = HexColor("#1a365d")
 ACCENT = HexColor("#c53030")
 LIGHT = HexColor("#edf2f7")
 
-# ====================== STYLES ======================
+# ====================== MOBILE-FRIENDLY CSS ======================
+st.markdown("""
+<style>
+    /* Make the whole app better on mobile */
+    .stApp {
+        max-width: 100% !important;
+    }
+    
+    /* Better spacing on small screens */
+    .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Larger, easier to tap buttons on mobile */
+    div.stButton > button {
+        width: 100%;
+        height: 3rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    
+    /* Better input fields */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div {
+        font-size: 1rem !important;
+    }
+    
+    /* Section headers */
+    h3 {
+        margin-top: 1.2rem !important;
+        margin-bottom: 0.6rem !important;
+    }
+    
+    /* Success message */
+    .stSuccess {
+        font-size: 1.05rem;
+    }
+    
+    /* Download button */
+    div.stDownloadButton > button {
+        width: 100%;
+        height: 3.2rem;
+        font-size: 1.15rem;
+        background-color: #276749 !important;
+        color: white !important;
+        border-radius: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ====================== STYLES FOR PDF ======================
 def get_styles():
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name='CompanyTitle', fontName='Helvetica-Bold', fontSize=20,
@@ -43,7 +96,6 @@ def get_styles():
                               textColor=ACCENT, alignment=TA_CENTER, spaceBefore=8, spaceAfter=8))
     return styles
 
-# ====================== PDF HELPERS ======================
 def header_footer(canvas, doc):
     canvas.saveState()
     w, h = A4
@@ -59,14 +111,13 @@ def header_footer(canvas, doc):
     canvas.restoreState()
 
 def make_header(styles):
-    elems = [
+    return [
         Paragraph(COMPANY_NAME, styles['CompanyTitle']),
         Paragraph(COMPANY_TAGLINE, styles['Tagline']),
         Paragraph(f"{COMPANY_ADDRESS}<br/>{COMPANY_PHONE} | {COMPANY_EMAIL}", styles['Footer']),
         Spacer(1, 3),
         HRFlowable(width="100%", thickness=1.5, color=PRIMARY, spaceAfter=6)
     ]
-    return elems
 
 def info_table(data, styles):
     rows = []
@@ -110,7 +161,7 @@ def build_pdf(story) -> bytes:
     buffer.seek(0)
     return buffer.getvalue()
 
-# ====================== DOCUMENT CREATORS ======================
+# ====================== PDF CREATORS ======================
 def create_warning(data):
     styles = get_styles()
     story = make_header(styles)
@@ -119,10 +170,8 @@ def create_warning(data):
     story.append(Spacer(1, 6))
     story.append(Paragraph("CUSTOMER & MACHINE INFORMATION", styles['SectionHead']))
     story.extend(info_table({
-        "Customer Name": data['customer_name'],
-        "Phone": data['customer_phone'],
-        "Address": data.get('customer_address', ''),
-        "Machine": data['machine_name'],
+        "Customer Name": data['customer_name'], "Phone": data['customer_phone'],
+        "Address": data.get('customer_address', ''), "Machine": data['machine_name'],
         "Serial No.": data.get('machine_serial', ''),
     }, styles))
     story.append(Paragraph("REASON FOR WARNING", styles['SectionHead']))
@@ -146,10 +195,8 @@ def create_payment(data):
     story.append(Spacer(1, 6))
     story.append(Paragraph("CUSTOMER & MACHINE INFORMATION", styles['SectionHead']))
     story.extend(info_table({
-        "Customer Name": data['customer_name'],
-        "Phone": data['customer_phone'],
-        "Address": data.get('customer_address', ''),
-        "Machine": data['machine_name'],
+        "Customer Name": data['customer_name'], "Phone": data['customer_phone'],
+        "Address": data.get('customer_address', ''), "Machine": data['machine_name'],
         "Serial No.": data.get('machine_serial', ''),
     }, styles))
     story.append(Paragraph("PAYMENT DETAILS", styles['SectionHead']))
@@ -176,10 +223,8 @@ def create_complaint(data):
     story.append(Spacer(1, 6))
     story.append(Paragraph("CUSTOMER & MACHINE INFORMATION", styles['SectionHead']))
     story.extend(info_table({
-        "Customer Name": data['customer_name'],
-        "Phone": data['customer_phone'],
-        "Address": data.get('customer_address', ''),
-        "Machine": data['machine_name'],
+        "Customer Name": data['customer_name'], "Phone": data['customer_phone'],
+        "Address": data.get('customer_address', ''), "Machine": data['machine_name'],
         "Serial No.": data.get('machine_serial', ''),
     }, styles))
     story.append(Paragraph("COMPLAINT DETAILS", styles['SectionHead']))
@@ -207,10 +252,8 @@ def create_register(data):
     story.append(Spacer(1, 6))
     story.append(Paragraph("CUSTOMER & MACHINE INFORMATION", styles['SectionHead']))
     story.extend(info_table({
-        "Customer Name": data['customer_name'],
-        "Phone": data['customer_phone'],
-        "Address": data.get('customer_address', ''),
-        "Machine": data['machine_name'],
+        "Customer Name": data['customer_name'], "Phone": data['customer_phone'],
+        "Address": data.get('customer_address', ''), "Machine": data['machine_name'],
         "Serial No.": data.get('machine_serial', ''),
     }, styles))
     story.append(Paragraph("JOB DETAILS", styles['SectionHead']))
@@ -245,40 +288,43 @@ def create_register(data):
     return build_pdf(story)
 
 # ====================== STREAMLIT UI ======================
-st.set_page_config(page_title="HR Traders Documents", page_icon="📄", layout="centered")
+st.set_page_config(
+    page_title="HR Traders Documents",
+    page_icon="📄",
+    layout="centered",          # better for mobile than "wide"
+    initial_sidebar_state="collapsed"
+)
 
 st.title("HR TRADERS")
-st.caption("Document Generator – Warning • Payment • Complaint • Register")
+st.caption("Document Generator")
 
 doc_type = st.selectbox(
     "Select Document Type",
     ["Warning Letter", "Payment Shortage Notice", "Customer Complaint Form", "Machine Register / Job Card"]
 )
 
-st.subheader("Customer & Machine Details")
-col1, col2 = st.columns(2)
-with col1:
-    customer_name = st.text_input("Customer Name *")
-    customer_phone = st.text_input("Customer Phone *")
-    customer_address = st.text_input("Customer Address")
-with col2:
-    machine_name = st.text_input("Machine Name / Model *")
-    machine_serial = st.text_input("Machine Serial No.")
-    date = st.text_input("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
+st.markdown("### Customer & Machine Details")
 
+# On mobile these will stack automatically
+customer_name = st.text_input("Customer Name *")
+customer_phone = st.text_input("Customer Phone *")
+customer_address = st.text_input("Customer Address")
+machine_name = st.text_input("Machine Name / Model *")
+machine_serial = st.text_input("Machine Serial No.")
+date = st.text_input("Date (DD-MM-YYYY)", value=datetime.now().strftime("%d-%m-%Y"))
 ref_no = st.text_input("Reference / Job No.", value=f"HR-{datetime.now().strftime('%Y%m%d-%H%M')}")
 
 pdf_bytes = None
 filename = "document.pdf"
 
 if doc_type == "Warning Letter":
-    st.subheader("Warning Details")
-    issue = st.text_area("Reason for Warning *")
+    st.markdown("### Warning Details")
+    issue = st.text_area("Reason for Warning *", height=100)
     previous_warnings = st.text_input("Previous Warnings", value="0")
     deadline = st.text_input("Deadline (DD-MM-YYYY)")
-    remarks = st.text_area("Remarks")
+    remarks = st.text_area("Remarks", height=80)
 
-    if st.button("Generate Warning PDF", type="primary"):
+    if st.button("Generate Warning PDF", type="primary", use_container_width=True):
         if customer_name and customer_phone and machine_name and issue:
             data = {
                 "customer_name": customer_name, "customer_phone": customer_phone,
@@ -293,16 +339,16 @@ if doc_type == "Warning Letter":
             st.error("Please fill all required fields (*)")
 
 elif doc_type == "Payment Shortage Notice":
-    st.subheader("Payment Details")
+    st.markdown("### Payment Details")
     machine_cost = st.text_input("Total Machine Cost (Rs.) *")
     amount_paid = st.text_input("Amount Paid (Rs.) *")
     amount_due = st.text_input("Outstanding Amount (Rs.) *")
     due_date = st.text_input("Due Date (DD-MM-YYYY) *")
     payment_method = st.text_input("Payment Method")
     bank_details = st.text_input("Bank / Payment Details")
-    remarks = st.text_area("Remarks")
+    remarks = st.text_area("Remarks", height=80)
 
-    if st.button("Generate Payment PDF", type="primary"):
+    if st.button("Generate Payment PDF", type="primary", use_container_width=True):
         if all([customer_name, customer_phone, machine_name, machine_cost, amount_paid, amount_due, due_date]):
             data = {
                 "customer_name": customer_name, "customer_phone": customer_phone,
@@ -319,15 +365,15 @@ elif doc_type == "Payment Shortage Notice":
             st.error("Please fill all required fields (*)")
 
 elif doc_type == "Customer Complaint Form":
-    st.subheader("Complaint Details")
-    problem = st.text_area("Problem Description *")
+    st.markdown("### Complaint Details")
+    problem = st.text_area("Problem Description *", height=100)
     complaint_date = st.text_input("Complaint Date", value=date)
     when_started = st.text_input("When did the problem start?")
     warranty = st.selectbox("Under Warranty?", ["No", "Yes"])
     priority = st.selectbox("Priority", ["Low", "Medium", "High", "Urgent"])
-    remarks = st.text_area("Remarks")
+    remarks = st.text_area("Remarks", height=80)
 
-    if st.button("Generate Complaint PDF", type="primary"):
+    if st.button("Generate Complaint PDF", type="primary", use_container_width=True):
         if customer_name and customer_phone and machine_name and problem:
             data = {
                 "customer_name": customer_name, "customer_phone": customer_phone,
@@ -343,16 +389,16 @@ elif doc_type == "Customer Complaint Form":
             st.error("Please fill all required fields (*)")
 
 else:  # Register
-    st.subheader("Job Card Details")
-    problem = st.text_area("Problem Reported *")
+    st.markdown("### Job Card Details")
+    problem = st.text_area("Problem Reported *", height=100)
     received_date = st.text_input("Date Received", value=date)
     estimated_cost = st.text_input("Estimated Repair Cost (Rs.)")
     parts_needed = st.text_input("Parts Needed")
     technician = st.text_input("Assigned Technician")
     status = st.selectbox("Status", ["Received", "In Progress", "Completed", "Delivered"])
-    remarks = st.text_area("Remarks")
+    remarks = st.text_area("Remarks", height=80)
 
-    if st.button("Generate Job Card PDF", type="primary"):
+    if st.button("Generate Job Card PDF", type="primary", use_container_width=True):
         if customer_name and customer_phone and machine_name and problem:
             data = {
                 "customer_name": customer_name, "customer_phone": customer_phone,
@@ -367,12 +413,13 @@ else:  # Register
         else:
             st.error("Please fill all required fields (*)")
 
-# Download button
+# Download section
 if pdf_bytes:
     st.success("✅ PDF generated successfully!")
     st.download_button(
         label="📥 Download PDF",
         data=pdf_bytes,
         file_name=filename,
-        mime="application/pdf"
+        mime="application/pdf",
+        use_container_width=True
     )
